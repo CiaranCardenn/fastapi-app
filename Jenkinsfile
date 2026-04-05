@@ -14,30 +14,17 @@ pipeline {
             }
         }
 
-        stage('Build Image') {
+        stage('Build & Push Image') {
             steps {
-                sh "${DOCKER} build -t ${IMAGE_NAME}:latest ."
-            }
-        }
+                sh """
+                ${DOCKER} buildx create --use || true
 
-        stage('Tag Image') {
-            steps {
-                script {
-                    def version = "v1.0.${BUILD_NUMBER}"
-                    env.VERSION = version
-                    sh "${DOCKER} tag ${IMAGE_NAME}:latest ${IMAGE_NAME}:${version}"
-                }
-            }
-        }
-
-        stage('Push Image') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh """
-                    echo "$PASS" | ${DOCKER} login -u $USER --password-stdin
-                    ${DOCKER} push ${IMAGE_NAME}:${VERSION}
-                    """
-                }
+                ${DOCKER} buildx build \
+                --platform linux/amd64 \
+                -t ${IMAGE_NAME}:v1.0.${BUILD_NUMBER} \
+                -t ${IMAGE_NAME}:latest \
+                --push .
+                """
             }
         }
     }
