@@ -32,10 +32,11 @@ pipeline {
 
         stage('Push Image') {
             steps {
-                script {
-                    docker.withRegistry('', 'dockerhub-creds') {
-                        sh "${DOCKER} push ${IMAGE_NAME}:${VERSION}"
-                    }
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+                    sh """
+                    ${DOCKER} login -u $USER -p $PASS
+                    ${DOCKER} push ${IMAGE_NAME}:${VERSION}
+                    """
                 }
             }
         }
