@@ -34,7 +34,7 @@ pipeline {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
                     sh """
-                    ${DOCKER} login -u $USER -p $PASS
+                    echo "$PASS" | ${DOCKER} login -u $USER --password-stdin
                     ${DOCKER} push ${IMAGE_NAME}:${VERSION}
                     """
                 }
