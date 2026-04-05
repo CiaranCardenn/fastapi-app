@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         IMAGE_NAME = "ciarancarden/fastapi-app"
+        DOCKER = "/usr/local/bin/docker"
     }
 
     stages {
@@ -15,9 +16,7 @@ pipeline {
 
         stage('Build Image') {
             steps {
-                script {
-                    docker.build("${IMAGE_NAME}:latest")
-                }
+                sh "${DOCKER} build -t ${IMAGE_NAME}:latest ."
             }
         }
 
@@ -26,7 +25,7 @@ pipeline {
                 script {
                     def version = "v1.0.${BUILD_NUMBER}"
                     env.VERSION = version
-                    sh "docker tag ${IMAGE_NAME}:latest ${IMAGE_NAME}:${version}"
+                    sh "${DOCKER} tag ${IMAGE_NAME}:latest ${IMAGE_NAME}:${version}"
                 }
             }
         }
@@ -35,7 +34,7 @@ pipeline {
             steps {
                 script {
                     docker.withRegistry('', 'dockerhub-creds') {
-                        sh "docker push ${IMAGE_NAME}:${VERSION}"
+                        sh "${DOCKER} push ${IMAGE_NAME}:${VERSION}"
                     }
                 }
             }
