@@ -2,8 +2,9 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "ciarancarden/fastapi-app"
-        DOCKER_TAG = "v1.0.${BUILD_NUMBER}"
+        DOCKER = "/opt/homebrew/bin/docker"
+        IMAGE = "ciarancarden/fastapi-app"
+        TAG = "v1.0.${BUILD_NUMBER}"
     }
 
     stages {
@@ -18,15 +19,15 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    # Enable buildx (only needed once, safe to run every time)
-                    docker buildx create --use || true
-                    docker buildx inspect --bootstrap
+                    # Setup buildx (safe to run every time)
+                    $DOCKER buildx create --use || true
+                    $DOCKER buildx inspect --bootstrap
 
-                    # Build for AMD64 and push
-                    docker buildx build \
+                    # Build AMD64 image and push
+                    $DOCKER buildx build \
                         --platform linux/amd64 \
-                        -t $DOCKER_IMAGE:$DOCKER_TAG \
-                        -t $DOCKER_IMAGE:latest \
+                        -t $IMAGE:$TAG \
+                        -t $IMAGE:latest \
                         --push .
                     '''
                 }
@@ -35,7 +36,7 @@ pipeline {
 
         stage('Print Image Info') {
             steps {
-                echo "Docker image pushed: ${DOCKER_IMAGE}:${DOCKER_TAG}"
+                echo "Docker image pushed: ${IMAGE}:${TAG}"
             }
         }
     }
