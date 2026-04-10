@@ -2,7 +2,6 @@ pipeline {
     agent any
 
     environment {
-        DOCKER = "/opt/homebrew/bin/docker"
         IMAGE = "ciarancarden/fastapi-app"
         TAG = "v1.0.${BUILD_NUMBER}"
     }
@@ -19,12 +18,16 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    # Setup buildx (safe to run every time)
-                    $DOCKER buildx create --use || true
-                    $DOCKER buildx inspect --bootstrap
+                    # Verify docker exists
+                    which docker
+                    docker --version
+
+                    # Setup buildx (safe)
+                    docker buildx create --use || true
+                    docker buildx inspect --bootstrap
 
                     # Build AMD64 image and push
-                    $DOCKER buildx build \
+                    docker buildx build \
                         --platform linux/amd64 \
                         -t $IMAGE:$TAG \
                         -t $IMAGE:latest \
