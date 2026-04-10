@@ -4,6 +4,7 @@ pipeline {
     environment {
         IMAGE = "ciarancarden/fastapi-app"
         TAG = "v1.0.${BUILD_NUMBER}"
+        PATH = "/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
     }
 
     stages {
@@ -18,15 +19,16 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    # Verify docker exists
+                    echo "Using Docker at:"
                     which docker
+
                     docker --version
 
                     # Setup buildx (safe)
                     docker buildx create --use || true
                     docker buildx inspect --bootstrap
 
-                    # Build AMD64 image and push
+                    # Build + push AMD64 image
                     docker buildx build \
                         --platform linux/amd64 \
                         -t $IMAGE:$TAG \
