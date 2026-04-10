@@ -2,41 +2,40 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "ciarancarden/fastapi-app"
-        DOCKER = "/usr/local/bin/docker"
+        DOCKER_IMAGE = "ciarancarden/fastapi-app"
+        DOCKER_TAG = "v1.0.${BUILD_NUMBER}"
     }
 
     stages {
 
-        stage('Checkout') {
+        stage('Checkout Code') {
             steps {
                 checkout scm
             }
         }
 
-        stage('Build Image') {
-            steps {
-                sh "${DOCKER} build -t ${IMAGE_NAME}:latest ."
-            }
-        }
-
-        stage('Tag Image') {
+        stage('Build & Push Docker Image') {
             steps {
                 script {
-                    env.TAG = "v1.0.${BUILD_NUMBER}"
-                    sh "${DOCKER} tag ${IMAGE_NAME}:latest ${IMAGE_NAME}:${TAG}"
+                    sh '''
+                    # Enable buildx (only needed once, safe to run every time)
+                    docker buildx create --use || true
+                    docker buildx inspect --bootstrap
+
+                    # Build for AMD64 and push
+                    docker buildx build \
+                        --platform linux/amd64 \
+                        -t $DOCKER_IMAGE:$DOCKER_TAG \
+                        -t $DOCKER_IMAGE:latest \
+                        --push .
+                    '''
                 }
             }
         }
 
-        stage('Push Image') {
+        stage('Print Image Info') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh """
-                    echo \$PASS | ${DOCKER} login -u \$USER --password-stdin
-                    ${DOCKER} push ${IMAGE_NAME}:${TAG}
-                    """
-                }
+                echo "Docker image pushed: ${DOCKER_IMAGE}:${DOCKER_TAG}"
             }
         }
     }
