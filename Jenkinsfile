@@ -19,16 +19,15 @@ pipeline {
             steps {
                 script {
                     sh '''
-                    echo "Using Docker at:"
+                    echo "=== DEBUG: Docker Path ==="
                     which docker
-
                     docker --version
 
-                    # Setup buildx (safe)
+                    echo "=== Setting up Docker Buildx ==="
                     docker buildx create --use || true
                     docker buildx inspect --bootstrap
 
-                    # Build + push AMD64 image
+                    echo "=== Building & Pushing AMD64 Image ==="
                     docker buildx build \
                         --platform linux/amd64 \
                         -t $IMAGE:$TAG \
